@@ -11,9 +11,9 @@ import qualified Data.List.NonEmpty as NEL
 
 data SqlGenerator = SqlGenerator
     {
-     sqlUpdate      :: TableName -> [PrimExpr] -> Assoc -> SqlUpdate,
-     sqlDelete      :: TableName -> [PrimExpr] -> SqlDelete,
-     sqlInsert      :: TableName -> [Attribute] -> NEL.NonEmpty [PrimExpr] -> SqlInsert,
+     sqlUpdate      :: SchemaName -> TableName -> [PrimExpr] -> Assoc -> SqlUpdate,
+     sqlDelete      :: SchemaName -> TableName -> [PrimExpr] -> SqlDelete,
+     sqlInsert      :: SchemaName -> TableName -> [Attribute] -> NEL.NonEmpty [PrimExpr] -> SqlInsert,
      sqlExpr        :: PrimExpr -> SqlExpr,
      sqlLiteral     :: Literal -> String,
      -- | Turn a string into a quoted string. Quote characters

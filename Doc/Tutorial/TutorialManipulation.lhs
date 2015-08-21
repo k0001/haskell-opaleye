@@ -32,7 +32,7 @@ fill in a value for us.
 
 > table :: Table (Maybe (Column PGInt4), Column PGFloat8, Column PGFloat8)
 >                (Column PGInt4, Column PGFloat8, Column PGFloat8)
-> table = Table "tablename" (p3 (optional "id", required "x", required "y"))
+> table = Table "public" "tablename" (p3 (optional "id", required "x", required "y"))
 
 To perform a delete we provide an expression from our read type to
 `Column Bool`.  All rows for which the expression is true are deleted.
@@ -41,7 +41,7 @@ To perform a delete we provide an expression from our read type to
 > delete = arrangeDeleteSql table (\(_, x, y) -> x .< y)
 
 ghci> putStrLn delete
-DELETE FROM tablename
+DELETE FROM "public"."tablename"
 WHERE ((x) < (y))
 
 
@@ -52,8 +52,7 @@ be omitted by providing `Nothing` instead.
 > insertNothing = arrangeInsertSql table (Nothing, 2, 3)
 
 ghci> putStrLn insertNothing
-INSERT INTO tablename (x,
-                       y)
+INSERT INTO "public"."tablename" (x, y)
 VALUES (2.0,
         3.0)
 
@@ -64,9 +63,7 @@ If we really want to specify an optional column we can use `Just`.
 > insertJust = arrangeInsertSql table (Just 1, 2, 3)
 
 ghci> putStrLn insertJust
-INSERT INTO tablename (id,
-                       x,
-                       y)
+INSERT INTO "public"."tablename" (id, x, y)
 VALUES (1,
         2.0,
         3.0)
@@ -82,7 +79,7 @@ according to the update function.
 >                                 (\(id_, _, _) -> id_ .== 5)
 
 ghci> putStrLn update
-UPDATE tablename
+UPDATE "public"."tablename"
 SET x = (x) + (y),
     y = (x) - (y)
 WHERE ((id) = 5)
@@ -101,8 +98,7 @@ Opaleye supports it also.
 >                         def' = def
 
 ghci> putStrLn insertReturning
-INSERT INTO tablename (x,
-                       y)
+INSERT INTO "public"."tablename" (x, y)
 VALUES (4.0,
         5.0)
 RETURNING id

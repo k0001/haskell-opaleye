@@ -40,8 +40,8 @@ people's names along with the age of their children.
 
 > personTable :: Table (Column PGText, Column PGInt4)
 >                      (Column PGText, Column PGInt4)
-> personTable = Table "personTable" (p2 ( required "name"
->                                       , required "child_age" ))
+> personTable = Table "public" "personTable" (p2 ( required "name"
+>                                                , required "child_age" ))
 
 > rangeOfChildrensAges :: Query (Column PGText, Column PGInt4)
 > rangeOfChildrensAges = aggregate (p2 (A.groupBy, range)) (queryTable personTable)
@@ -57,7 +57,7 @@ FROM (SELECT *
             FROM (SELECT *
                   FROM (SELECT name as name0_1,
                                child_age as child_age1_1
-                        FROM personTable as T1) as T1) as T1
+                        FROM "public"."personTable" as T1) as T1) as T1
             GROUP BY name0_1) as T1) as T1
 
 
@@ -65,7 +65,7 @@ Idealised SQL:
 
 SELECT name,
        MAX(child_age) - MIN(child_age)
-FROM personTable
+FROM "public"."personTable"
 GROUP BY name
 
 

@@ -38,7 +38,7 @@ import qualified Control.Arrow as Arr
 --                              (Column PGInt4) (Column PGFloat8))
 --                      (Widget (Column PGText) (Column PGText) (Column PGText)
 --                              (Column PGInt4) (Column PGFloat8))
--- widgetTable = Table \"widgetTable\"
+-- widgetTable = Table \"public\" \"widgetTable\"
 --                      (pWidget Widget { wid      = optional \"id\"
 --                                      , color    = required \"color\"
 --                                      , location = required \"location\"
@@ -46,7 +46,9 @@ import qualified Control.Arrow as Arr
 --                                      , radius   = required \"radius\" })
 -- @
 data Table writerColumns viewColumns =
-  Table String (TableProperties writerColumns viewColumns)
+  Table String String (TableProperties writerColumns viewColumns)
+  -- ^ Schema name (@"public"@ by default in PostgreSQL), table name,
+  --   table properties.
 
 data TableProperties writerColumns viewColumns =
   TableProperties (Writer writerColumns viewColumns) (View viewColumns)
@@ -71,10 +73,10 @@ queryTable :: TM.ColumnMaker viewColumns columns
             -> Tag.Tag
             -> (columns, PQ.PrimQuery)
 queryTable cm table tag = (primExprs, primQ) where
-  (Table tableName (TableProperties _ (View tableCols))) = table
+  (Table schemaName tableName (TableProperties _ (View tableCols))) = table
   (primExprs, projcols) = runColumnMaker cm tag tableCols
   primQ :: PQ.PrimQuery
-  primQ = PQ.BaseTable tableName projcols
+  primQ = PQ.BaseTable schemaName tableName projcols
 
 runColumnMaker :: TM.ColumnMaker tablecolumns columns
                   -> Tag.Tag
@@ -157,6 +159,6 @@ instance ProductProfunctor TableProperties where
   (***!) = PP.defaultProfunctorProduct
 
 instance Functor (Table a) where
-  fmap f (Table s tp) = Table s (fmap f tp)
+  fmap f (Table s t tp) = Table s t (fmap f tp)
 
 -- }

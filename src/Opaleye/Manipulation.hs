@@ -37,10 +37,10 @@ runInsert :: PGS.Connection -> T.Table columns columns' -> columns -> IO Int64
 runInsert conn = PGS.execute_ conn . fromString .: arrangeInsertSql
 
 arrangeInsertMany :: T.Table columns a -> NEL.NonEmpty columns -> HSql.SqlInsert
-arrangeInsertMany (T.Table tableName (TI.TableProperties writer _)) columns = insert
+arrangeInsertMany (T.Table schemaName tableName (TI.TableProperties writer _)) columns = insert
   where (columnExprs, columnNames) = TI.runWriter' writer columns
         insert = SG.sqlInsert SD.defaultSqlGenerator
-                      tableName columnNames columnExprs
+                      schemaName tableName columnNames columnExprs
 
 arrangeInsertManySql :: T.Table columns a -> NEL.NonEmpty columns -> String
 arrangeInsertManySql = show . HPrint.ppInsert .: arrangeInsertMany
@@ -57,9 +57,9 @@ runInsertMany conn table columns = case NEL.nonEmpty columns of
 arrangeUpdate :: T.Table columnsW columnsR
               -> (columnsR -> columnsW) -> (columnsR -> Column PGBool)
               -> HSql.SqlUpdate
-arrangeUpdate (TI.Table tableName (TI.TableProperties writer (TI.View tableCols)))
+arrangeUpdate (TI.Table schemaName tableName (TI.TableProperties writer (TI.View tableCols)))
               update cond =
-  SG.sqlUpdate SD.defaultSqlGenerator tableName [condExpr] (update' tableCols)
+  SG.sqlUpdate SD.defaultSqlGenerator schemaName tableName [condExpr] (update' tableCols)
   where update' = map (\(x, y) -> (y, x))
                    . TI.runWriter writer
                    . update
@@ -76,9 +76,9 @@ runUpdate :: PGS.Connection -> T.Table columnsW columnsR
 runUpdate conn = PGS.execute_ conn . fromString .:. arrangeUpdateSql
 
 arrangeDelete :: T.Table a columnsR -> (columnsR -> Column PGBool) -> HSql.SqlDelete
-arrangeDelete (TI.Table tableName (TI.TableProperties _ (TI.View tableCols)))
+arrangeDelete (TI.Table schemaName tableName (TI.TableProperties _ (TI.View tableCols)))
               cond =
-  SG.sqlDelete SD.defaultSqlGenerator tableName [condExpr]
+  SG.sqlDelete SD.defaultSqlGenerator schemaName tableName [condExpr]
   where Column condExpr = cond tableCols
 
 arrangeDeleteSql :: T.Table a columnsR -> (columnsR -> Column PGBool) -> String
@@ -96,7 +96,7 @@ arrangeInsertReturning :: U.Unpackspec returned ignored
 arrangeInsertReturning unpackspec table columns returningf =
   Sql.Returning insert returningSEs
   where insert = arrangeInsert table columns
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        TI.Table _ _ (TI.TableProperties _ (TI.View columnsR)) = table
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = map Sql.sqlExpr returningPEs
 
@@ -120,7 +120,7 @@ runInsertReturningExplicit qr conn t w r = PGS.queryWith_ (rowParser (r v)) conn
                                              (arrangeInsertReturningSql u t w r))
   where IRQ.QueryRunner u rowParser _ = qr
         --- ^^ TODO: need to make sure we're not trying to read zero rows
-        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        TI.Table _ _ (TI.TableProperties _ (TI.View v)) = t
         -- This method of getting hold of the return type feels a bit
         -- suspect.  I haven't checked it for validity.
 
@@ -145,7 +145,7 @@ arrangeUpdateReturning :: U.Unpackspec returned ignored
 arrangeUpdateReturning unpackspec table updatef cond returningf =
   Sql.Returning update returningSEs
   where update = arrangeUpdate table updatef cond
-        TI.Table _ (TI.TableProperties _ (TI.View columnsR)) = table
+        TI.Table _ _ (TI.TableProperties _ (TI.View columnsR)) = table
         returningPEs = U.collectPEs unpackspec (returningf columnsR)
         returningSEs = map Sql.sqlExpr returningPEs
 
@@ -171,7 +171,7 @@ runUpdateReturningExplicit qr conn t update cond r =
                  (fromString (arrangeUpdateReturningSql u t update cond r))
   where IRQ.QueryRunner u rowParser _ = qr
         --- ^^ TODO: need to make sure we're not trying to read zero rows
-        TI.Table _ (TI.TableProperties _ (TI.View v)) = t
+        TI.Table _ _ (TI.TableProperties _ (TI.View v)) = t
 
 runUpdateReturning :: (D.Default RQ.QueryRunner returned haskells)
                       => PGS.Connection

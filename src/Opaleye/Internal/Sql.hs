@@ -79,10 +79,10 @@ sql (pes, pq, t) = SelectFrom $ newSelect { attrs = SelectAttrs (ensureColumns (
 unit :: Select
 unit = SelectFrom newSelect { attrs  = SelectAttrs (ensureColumns []) }
 
-baseTable :: String -> [(Symbol, HPQ.PrimExpr)] -> Select
-baseTable name columns = SelectFrom $
+baseTable :: String -> String -> [(Symbol, HPQ.PrimExpr)] -> Select
+baseTable sch name columns = SelectFrom $
     newSelect { attrs = SelectAttrs (ensureColumns (map sqlBinding columns))
-              , tables = [Table (HSql.SqlTable name)] }
+              , tables = [Table (HSql.SqlTable sch name)] }
 
 product :: NEL.NonEmpty Select -> [HPQ.PrimExpr] -> Select
 product ss pes = SelectFrom $

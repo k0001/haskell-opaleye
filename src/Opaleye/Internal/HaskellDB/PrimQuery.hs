@@ -7,6 +7,7 @@ module Opaleye.Internal.HaskellDB.PrimQuery where
 import qualified Opaleye.Internal.Tag as T
 import Data.ByteString (ByteString)
 
+type SchemaName = String
 type TableName  = String
 type Attribute  = String
 type Name = String

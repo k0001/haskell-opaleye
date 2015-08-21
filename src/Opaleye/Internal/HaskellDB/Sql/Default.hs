@@ -50,29 +50,32 @@ toSqlAssoc gen = map (\(attr,expr) -> (toSqlColumn attr, sqlExpr gen expr))
 
 
 defaultSqlUpdate :: SqlGenerator
+                 -> SchemaName -- ^ Name of the schema where the table is.
                  -> TableName  -- ^ Name of the table to update.
                  -> [PrimExpr] -- ^ Conditions which must all be true for a row
                                --   to be updated.
                  -> Assoc -- ^ Update the data with this.
                  -> SqlUpdate
-defaultSqlUpdate gen name criteria assigns
-        = SqlUpdate (SqlTable name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
+defaultSqlUpdate gen sch name criteria assigns
+        = SqlUpdate (SqlTable sch name) (toSqlAssoc gen assigns) (map (sqlExpr gen) criteria)
 
 
 defaultSqlInsert :: SqlGenerator
+                 -> SchemaName 
                  -> TableName
                  -> [Attribute]
                  -> NEL.NonEmpty [PrimExpr]
                  -> SqlInsert
-defaultSqlInsert gen name attrs exprs =
-  SqlInsert (SqlTable name) (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
+defaultSqlInsert gen sch name attrs exprs =
+  SqlInsert (SqlTable sch name) (map toSqlColumn attrs) ((fmap . map) (sqlExpr gen) exprs)
 
 defaultSqlDelete :: SqlGenerator
+                 -> SchemaName -- ^ Name of the schema where the table is.
                  -> TableName -- ^ Name of the table
                  -> [PrimExpr] -- ^ Criteria which must all be true for a row
                                --   to be deleted.
                  -> SqlDelete
-defaultSqlDelete gen name criteria = SqlDelete (SqlTable name) (map (sqlExpr gen) criteria)
+defaultSqlDelete gen sch name criteria = SqlDelete (SqlTable sch name) (map (sqlExpr gen) criteria)
 
 
 defaultSqlExpr :: SqlGenerator -> PrimExpr -> SqlExpr
